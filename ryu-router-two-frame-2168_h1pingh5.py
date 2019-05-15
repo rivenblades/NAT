@@ -135,7 +135,19 @@ class SimpleSwitch(app_manager.RyuApp):
 
 		# learn a mac address to avoid FLOOD next time.
 		self.mac_to_port[dpid][src] = msg.in_port
-
+		# if dpid == 0x2:
+		# 	print("I am s2 switch")
+		# 	ipv4_pkt = pkt.get_protocol(ipv4.ipv4)
+		# 	if ipv4_pkt:
+		# 		#Add flow
+		# 		if ipv4_pkt.dst == h3_ip or ipv4_pkt.dst == h4_ip:
+		# 			print("Mpainw alla to flow mou to allazoune")
+		# 			match = datapath.ofproto_parser.OFPMatch( in_port=1,nw_dst = '192.168.2.0')
+		# 				#nw_dst='192.168.2.0')
+		# 			actions = [datapath.ofproto_parser.OFPActionSetDlSrc(LR_RIGHT_MAC),
+		# 						datapath.ofproto_parser.OFPActionSetDlDst(RR_LEFT_MAC),
+		# 						datapath.ofproto_parser.OFPActionOutput(2)]
+		# 			self.add_flow(datapath,match,actions)
 		if dpid == 0x1A:
 			if eth.ethertype == ether_types.ETH_TYPE_ARP: # this packet is ARP packet
 				arp_pkt = pkt.get_protocol(arp.arp)		
@@ -166,25 +178,28 @@ class SimpleSwitch(app_manager.RyuApp):
 								
 				#Add flow
 				if ipv4_pkt.dst == h3_ip or ipv4_pkt.dst == h4_ip:
-					match = datapath.ofproto_parser.OFPMatch(in_port=2,nw_dst = '192.168.2.0')
+					print("Mpainw alla to flow mou to allazoune")
+					match = datapath.ofproto_parser.OFPMatch( in_port=2,nw_dst = '192.168.2.0')
 						#nw_dst='192.168.2.0')
 					actions = [datapath.ofproto_parser.OFPActionSetDlSrc(LR_RIGHT_MAC),
 								datapath.ofproto_parser.OFPActionSetDlDst(RR_LEFT_MAC),
 								datapath.ofproto_parser.OFPActionOutput(1)]
 					self.add_flow(datapath,match,actions)
+				# Destined TO h1 or h2
 				if ipv4_pkt.dst == h1_ip or ipv4_pkt.dst == h2_ip:
 					if ipv4_pkt.src != '200.0.0.2':
-						match = datapath.ofproto_parser.OFPMatch(in_port=1,nw_dst = '192.168.1.0')
+						match = datapath.ofproto_parser.OFPMatch( in_port=1,nw_dst = '192.168.1.0')
                                                 #nw_dst='192.168.1.0')
 						actions = [datapath.ofproto_parser.OFPActionSetDlSrc(LR_LEFT_MAC),
 								datapath.ofproto_parser.OFPActionSetDlDst('ff:ff:ff:ff:ff:ff'),
 								datapath.ofproto_parser.OFPActionOutput(2)]
 						self.add_flow(datapath,match,actions)
 					else:
-						match = datapath.ofproto_parser.OFPMatch(in_port=3,nw_dst = '200.0.0.0')
+						print("Toylaxiston mpika edw")
+						match = datapath.ofproto_parser.OFPMatch( in_port=3,nw_dst = '200.0.0.0')
                                                 #nw_dst='192.168.1.0')
-						actions = [datapath.ofproto_parser.OFPActionSetDlSrc(LR_LEFT_MAC),
-								datapath.ofproto_parser.OFPActionSetDlDst('ff:ff:ff:ff:ff:ff'),
+						actions = [datapath.ofproto_parser.OFPActionSetDlSrc(h5_mac),
+								datapath.ofproto_parser.OFPActionSetNwDst(h1_ip),# i had this h1_mac to work.But exercise says to change ip to be h1-h4
 								datapath.ofproto_parser.OFPActionOutput(2)]
 						self.add_flow(datapath,match,actions)
 					
@@ -192,7 +207,7 @@ class SimpleSwitch(app_manager.RyuApp):
 				if ipv4_pkt.dst.startswith('200.0.0'):#== h5_ip:
 					print("[LEFT-ROUTER]Packet for h5")
 					if ipv4_pkt.src == h1_ip:
-						match = datapath.ofproto_parser.OFPMatch(in_port=2,nw_dst = '200.0.0.0')
+						match = datapath.ofproto_parser.OFPMatch( in_port=2,nw_dst = '200.0.0.0')
 							#nw_dst='192.168.2.0')
 						actions = [datapath.ofproto_parser.OFPActionSetDlSrc(src_to_mac[ipv4_pkt.src]),
 									datapath.ofproto_parser.OFPActionSetDlDst(src_to_mac[ipv4_pkt.dst]),
@@ -200,15 +215,13 @@ class SimpleSwitch(app_manager.RyuApp):
 						self.add_flow(datapath,match,actions)
 					elif ipv4_pkt.src == h3_ip:
 						print(src_to_mac[ipv4_pkt.src])
-						match = datapath.ofproto_parser.OFPMatch(in_port=1,nw_dst = '200.0.0.0')
+						match = datapath.ofproto_parser.OFPMatch( in_port=1,nw_dst = '200.0.0.0')
 							#nw_dst='192.168.2.0')
 						actions = [datapath.ofproto_parser.OFPActionSetDlSrc(src_to_mac[ipv4_pkt.src]),
 									datapath.ofproto_parser.OFPActionSetDlDst(src_to_mac[ipv4_pkt.dst]),
 									datapath.ofproto_parser.OFPActionOutput(3)]
 						self.add_flow(datapath,match,actions)
-				# if ipv4_pkt.dst.startswith('200.0.0'):
-				# 	print('Forward it to the left router')
-				# 	# sys.exit()
+		
 				return
 			# else:
 			# 	# the right router forwards the traffic destined to 200.0.0.0/24 to the left router
@@ -241,14 +254,14 @@ class SimpleSwitch(app_manager.RyuApp):
 
 				#Add flow
 				if ipv4_pkt.dst == h1_ip or ipv4_pkt.dst == h2_ip:
-					match = datapath.ofproto_parser.OFPMatch(in_port=2,nw_dst="192.168.1.0")#,dl_src = RR_LEFT_MAC)
+					match = datapath.ofproto_parser.OFPMatch( in_port=2,nw_dst="192.168.1.0")#,dl_src = RR_LEFT_MAC)
 	                                        #nw_dst='192.168.1.0')
 					actions = [datapath.ofproto_parser.OFPActionSetDlSrc(RR_LEFT_MAC),
 							datapath.ofproto_parser.OFPActionSetDlDst(LR_RIGHT_MAC),
 								datapath.ofproto_parser.OFPActionOutput(1)]
 					self.add_flow(datapath,match,actions)
 				if ipv4_pkt.dst == h3_ip or ipv4_pkt.dst == h4_ip:
-					match = datapath.ofproto_parser.OFPMatch(in_port=1,nw_dst = '192.168.2.0')
+					match = datapath.ofproto_parser.OFPMatch( in_port=1,nw_dst = '192.168.2.0')
 	                                        #nw_dst='192.168.2.0')
 					actions = [datapath.ofproto_parser.OFPActionSetDlSrc(RR_RIGHT_MAC),
 							datapath.ofproto_parser.OFPActionSetDlDst('ff:ff:ff:ff:ff:ff'),
@@ -257,7 +270,7 @@ class SimpleSwitch(app_manager.RyuApp):
 				if ipv4_pkt.dst.startswith('200.0.0'):#== h5_ip:
 					print("[RIGHT-ROUTER]Packet for h5")
 					if ipv4_pkt.src == h3_ip:
-						match = datapath.ofproto_parser.OFPMatch(in_port=2,nw_dst = '200.0.0.0')
+						match = datapath.ofproto_parser.OFPMatch( in_port=2,nw_dst = '200.0.0.0')
 							#nw_dst='192.168.2.0')
 						actions = [datapath.ofproto_parser.OFPActionSetDlSrc(src_to_mac[ipv4_pkt.src]),
 									datapath.ofproto_parser.OFPActionSetDlDst(src_to_mac[ipv4_pkt.dst]),
